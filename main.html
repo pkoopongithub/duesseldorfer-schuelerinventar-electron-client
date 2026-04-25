@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DÜSK - Hauptansicht</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .sidebar-header p {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        
+        .group-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        
+        .group-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .group-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .group-item.active {
+            background: #e3f2fd;
+            border-left: 3px solid #2196F3;
+        }
+        
+        .group-name {
+            font-size: 14px;
+        }
+        
+        .group-count {
+            font-size: 12px;
+            color: #999;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            background: white;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .search-bar {
+            flex: 1;
+            position: relative;
+            max-width: 300px;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 8px 32px 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .search-bar .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 8px;
+            color: #999;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1976D2;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        /* Profile Table */
+        .profiles-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .profile-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .profile-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .profile-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .profile-info p {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .profile-id {
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .icon-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        
+        .status-bar {
+            background: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            padding: 8px 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        
+        .fab:hover {
+            transform: scale(1.05);
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>DÜSK</h2>
+                <p id="userInfo">Benutzer: gast</p>
+            </div>
+            <div class="group-list" id="groupList">
+                <div class="group-item active" data-group-id="">
+                    <span class="group-name">Alle Profile</span>
+                    <span class="group-count" id="allCount">0</span>
+                </div>
+                <!-- Gruppen werden dynamisch geladen -->
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="toolbar">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Suchen...">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <button class="btn btn-secondary" id="refreshBtn">🔄 Aktualisieren</button>
+                <button class="btn btn-secondary" id="groupsBtn">👥 Gruppen</button>
+                <button class="btn btn-secondary" id="logoutBtn">🚪 Abmelden</button>
+            </div>
+            
+            <div class="profiles-container" id="profilesContainer">
+                <div class="empty-state">Profile werden geladen...</div>
+            </div>
+            
+            <div class="status-bar" id="statusBar">
+                Bereit
+            </div>
+        </div>
+    </div>
+    
+    <button class="fab" id="fabBtn">+</button>
+    
+    <script src="../renderer.js"></script>
+    <script src="../js/session.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/calculator.js"></script>
+    <script src="../js/utils.js"></script>
+    <script>
+        let allProfiles = [];
+        let filteredProfiles = [];
+        let groups = [];
+        let selectedGroupId = null;
+        let searchQuery = '';
+        
+        // DOM Elemente
+        const profilesContainer = document.getElementById('profilesContainer');
+        const groupList = document.getElementById('groupList');
+        const searchInput = document.getElementById('searchInput');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const groupsBtn = document.getElementById('groupsBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const fabBtn = document.getElementById('fabBtn');
+        const statusBar = document.getElementById('statusBar');
+        const allCountSpan = document.getElementById('allCount');
+        
+        // Event Listener
+        refreshBtn.addEventListener('click', loadProfiles);
+        groupsBtn.addEventListener('click', () => window.electronAPI.navigate('group-manager'));
+        logoutBtn.addEventListener('click', logout);
+        fabBtn.addEventListener('click', () => window.electronAPI.navigate('profile-edit'));
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            applyFilters();
+        });
+        
+        // Menu Events
+        window.electronAPI.onMenuNewProfile(() => {
+            window.electronAPI.navigate('profile-edit');
+        });
+        window.electronAPI.onMenuGroups(() => {
+            window.electronAPI.navigate('group-manager');
+        });
+        window.electronAPI.onMenuExportPDF(() => {
+            exportToPDF();
+        });
+        window.electronAPI.onMenuExportCSV(() => {
+            exportToCSV();
+        });
+        
+        async function loadProfiles() {
+            statusBar.textContent = 'Lade Profile...';
+            
+            const result = await apiCall('api_profiles.php', 'GET');
+            
+            if (result.success) {
+                allProfiles = result.data;
+                await loadGroups();
+                applyFilters();
+                statusBar.textContent = `${allProfiles.length} Profile geladen`;
+            } else {
+                statusBar.textContent = 'Fehler beim Laden';
+                showError('Profile konnten nicht geladen werden');
+            }
+        }
+        
+        async function loadGroups() {
+            const result = await apiCall('api_groups.php', 'GET');
+            
+            if (result.success) {
+                groups = result.data;
+                renderGroupList();
+            }
+        }
+        
+        function renderGroupList() {
+            groupList.innerHTML = `
+                <div class="group-item ${!selectedGroupId ? 'active' : ''}" data-group-id="">
+                    <span class="group-name">Alle Profile</span>
+                    <span class="group-count">${allProfiles.length}</span>
+                </div>
+            `;
+            
+            for (const group of groups) {
+                const count = allProfiles.filter(p => p.gruppeID == group.gruppeID).length;
+                groupList.innerHTML += `
+                    <div class="group-item ${selectedGroupId == group.gruppeID ? 'active' : ''}" data-group-id="${group.gruppeID}">
+                        <span class="group-name">${escapeHtml(group.name)}</span>
+                        <span class="group-count">${count}</span>
+                    </div>
+                `;
+            }
+            
+            // Click-Handler für Gruppen
+            document.querySelectorAll('.group-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectedGroupId = item.dataset.groupId || null;
+                    applyFilters();
+                    renderGroupList();
+                });
+            });
+            
+            allCountSpan.textContent = allProfiles.length;
+        }
+        
+        function applyFilters() {
+            filteredProfiles = [...allProfiles];
+            
+            // Gruppenfilter
+            if (selectedGroupId) {
+                filteredProfiles = filteredProfiles.filter(p => p.gruppeID == selectedGroupId);
+            }
+            
+            // Suchfilter
+            if (searchQuery) {
+                filteredProfiles = filteredProfiles.filter(p => 
+                    p.name.toLowerCase().includes(searchQuery) ||
+                    (p.gruppename && p.gruppename.toLowerCase().includes(searchQuery))
+                );
+            }
+            
+            renderProfiles();
+        }
+        
+        function renderProfiles() {
+            if (filteredProfiles.length === 0) {
+                profilesContainer.innerHTML = '<div class="empty-state">Keine Profile gefunden</div>';
+                return;
+            }
+            
+            profilesContainer.innerHTML = '';
+            
+            for (const profile of filteredProfiles) {
+                const card = document.createElement('div');
+                card.className = 'profile-card';
+                card.innerHTML = `
+                    <div class="profile-info">
+                        <h3>${escapeHtml(profile.name)}</h3>
+                        <p>${escapeHtml(profile.gruppename || 'Keine Gruppe')}</p>
+                    </div>
+                    <div class="profile-id">ID: ${profile.profilID}</div>
+                    <div class="profile-actions">
+                        <button class="icon-btn" data-action="view" data-id="${profile.profilID}" title="Anzeigen">👁️</button>
+                        <button class="icon-btn" data-action="edit" data-id="${profile.profilID}" title="Bearbeiten">✏️</button>
+                        <button class="icon-btn" data-action="delete" data-id="${profile.profilID}" title="Löschen">🗑️</button>
+                    </div>
+                `;
+                
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.icon-btn')) {
+                        viewProfile(profile.profilID);
+                    }
+                });
+                
+                profilesContainer.appendChild(card);
+            }
+            
+            // Action-Handler
+            document.querySelectorAll('[data-action="view"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    viewProfile(btn.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editProfile(btn.dataset.id);
+                });
+            });
+            
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteProfile(btn.dataset.id);
+                });
+            });
+        }
+        
+        async function viewProfile(profileId) {
+            const profile = allProfiles.find(p => p.profilID === profileId);
+            if (profile) {
+                // Profile für Detailansicht speichern
+                await window.electronAPI.storeSet('currentProfile', profile);
+                window.electronAPI.navigate('profile-detail');
+            }
+        }
+        
+        function editProfile(profileId) {
+            const profile = allProfiles.find(p => p.profilID === profileId);
+            if (profile) {
+                window.electronAPI.storeSet('editProfile', profile).then(() => {
+                    window.electronAPI.navigate('profile-edit');
+                });
+            }
+        }
+        
+        async function deleteProfile(profileId) {
+            const confirm = await window.electronAPI.showMessageBox({
+                type: 'question',
+                title: 'Profil löschen',
+                message: 'Möchten Sie dieses Profil wirklich löschen?',
+                buttons: ['Abbrechen', 'Löschen'],
+                defaultId: 0,
+                cancelId: 0
+            });
+            
+            if (confirm.response === 1) {
+                statusBar.textContent = 'Lösche Profil...';
+                const result = await apiCall(`api_profiles.php?id=${profileId}`, 'DELETE');
+                
+                if (result.success && result.status === 200) {
+                    await loadProfiles();
+                    statusBar.textContent = 'Profil gelöscht';
+                } else {
+                    statusBar.textContent = 'Fehler beim Löschen';
+                    showError('Löschen fehlgeschlagen');
+                }
+            }
+        }
+        
+        async function logout() {
+            await window.electronAPI.logout();
+        }
+        
+        async function exportToPDF() {
+            // PDF Export implementieren
+            showError('PDF Export wird noch implementiert');
+        }
+        
+        async function exportToCSV() {
+            let csv = 'ID,Name,Gruppe,';
+            for (let i = 1; i <= 6; i++) {
+                csv += `Kompetenz${i},`;
+            }
+            csv += '\n';
+            
+            for (const profile of filteredProfiles) {
+                const values = calculateCompetenceValues(profile);
+                csv += `${profile.profilID},"${profile.name}","${profile.gruppename || ''}",`;
+                for (const v of values.se) {
+                    csv += `${v},`;
+                }
+                csv += '\n';
+            }
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `duesk_export_${new Date().toISOString().slice(0,19)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function showError(message) {
+            window.electronAPI.showMessageBox({
+                type: 'error',
+                title: 'Fehler',
+                message: message,
+                buttons: ['OK']
+            });
+        }
+        
+        // Initial laden
+        loadProfiles();
+    </script>
+</body>
+</html>

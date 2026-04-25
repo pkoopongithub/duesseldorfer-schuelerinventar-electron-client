@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DÜSK - Zeitreihe</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .selector {
+            margin-bottom: 20px;
+        }
+        
+        select {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .chart-container {
+            height: 350px;
+            margin-bottom: 20px;
+        }
+        
+        .table-container {
+            max-height: 400px;
+            overflow: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th:first-child, td:first-child {
+            text-align: left;
+        }
+        
+        th {
+            background: #f5f5f5;
+            position: sticky;
+            top: 0;
+        }
+        
+        .btn-back {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>Zeitreihenanalyse</h2>
+            
+            <div class="selector">
+                <label>Kompetenz:</label>
+                <select id="competenceSelect"></select>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="timeSeriesChart"></canvas>
+            </div>
+            
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Profil</th>
+                            <th>Arbeitsverhalten</th>
+                            <th>Lernverhalten</th>
+                            <th>Sozialverhalten</th>
+                            <th>Fachkompetenz</th>
+                            <th>Personale Kompetenz</th>
+                            <th>Methodenkompetenz</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <button class="btn-back" onclick="window.electronAPI.navigate('main')">← Zurück</button>
+    
+    <script src="../renderer.js"></script>
+    <script src="../js/session.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/calculator.js"></script>
+    <script src="../js/utils.js"></script>
+    <script>
+        let profiles = [];
+        let competenceValues = [];
+        let profileNames = [];
+        let chart = null;
+        
+        const kompetenzen = ['Arbeitsverhalten', 'Lernverhalten', 'Sozialverhalten', 'Fachkompetenz', 'Personale Kompetenz', 'Methodenkompetenz'];
+        
+        async function loadData() {
+            const result = await apiCall('api_profiles.php', 'GET');
+            
+            if (result.success) {
+                profiles = result.data;
+                calculateAllProfiles();
+                renderCompetenceSelect();
+                renderTable();
+                renderChart(0);
+            }
+        }
+        
+        function calculateAllProfiles() {
+            competenceValues = [];
+            profileNames = [];
+            
+            for (const profile of profiles) {
+                const { se } = calculateCompetenceValues(profile);
+                competenceValues.push(se);
+                profileNames.push(profile.name);
+            }
+        }
+        
+        function renderCompetenceSelect() {
+            const select = document.getElementById('competenceSelect');
+            select.innerHTML = '';
+            for (let i = 0; i < kompetenzen.length; i++) {
+                select.innerHTML += `<option value="${i}">${kompetenzen[i]}</option>`;
+            }
+            select.addEventListener('change', (e) => {
+                renderChart(parseInt(e.target.value));
+            });
+        }
+        
+        function renderChart(competenceIndex) {
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+            
+            if (chart) chart.destroy();
+            
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: profileNames.map((name, i) => i + 1),
+                    datasets: [{
+                        label: kompetenzen[competenceIndex],
+                        data: competenceValues.map(v => v[competenceIndex]),
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 1, max: 5, stepSize: 1 } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const index = context.dataIndex;
+                                    return `${profileNames[index]}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTable() {
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < profiles.length; i++) {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = profileNames[i];
+                for (let j = 0; j < 6; j++) {
+                    row.insertCell(j + 1).textContent = competenceValues[i][j];
+                }
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>

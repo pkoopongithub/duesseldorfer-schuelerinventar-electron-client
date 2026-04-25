@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DÜSK - Gruppenverwaltung</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .add-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .add-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        
+        .group-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .group-item:last-child {
+            border-bottom: none;
+        }
+        
+        .group-name {
+            font-size: 16px;
+        }
+        
+        .group-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .icon-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .btn-primary {
+            padding: 10px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .btn-secondary {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .form-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>Gruppenverwaltung</h2>
+            
+            <div class="add-group">
+                <input type="text" id="newGroupName" placeholder="Neue Gruppe...">
+                <button class="btn-primary" id="addBtn">Hinzufügen</button>
+            </div>
+            
+            <div id="groupsContainer">
+                <div class="empty-state">Lade Gruppen...</div>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="window.electronAPI.navigate('main')">Schließen</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../renderer.js"></script>
+    <script src="../js/session.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        let groups = [];
+        
+        async function loadGroups() {
+            const result = await apiCall('api_groups.php', 'GET');
+            
+            if (result.success) {
+                groups = result.data;
+                renderGroups();
+            }
+        }
+        
+        function renderGroups() {
+            const container = document.getElementById('groupsContainer');
+            
+            if (groups.length === 0) {
+                container.innerHTML = '<div class="empty-state">Keine Gruppen vorhanden</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <ul class="group-list">
+                    ${groups.map(group => `
+                        <li class="group-item">
+                            <span class="group-name">${escapeHtml(group.name)}</span>
+                            <div class="group-actions">
+                                <button class="icon-btn" data-action="delete" data-id="${group.gruppeID}" title="Löschen">🗑️</button>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = parseInt(btn.dataset.id);
+                    const result = await apiCall(`api_groups.php?id=${id}`, 'DELETE');
+                    
+                    if (result.success && result.status === 200) {
+                        await loadGroups();
+                    } else {
+                        alert('Fehler beim Löschen der Gruppe');
+                    }
+                });
+            });
+        }
+        
+        document.getElementById('addBtn').addEventListener('click', async () => {
+            const name = document.getElementById('newGroupName').value.trim();
+            if (!name) {
+                alert('Bitte geben Sie einen Namen ein');
+                return;
+            }
+            
+            const result = await apiCall('api_groups.php', 'POST', { name });
+            
+            if (result.success) {
+                document.getElementById('newGroupName').value = '';
+                await loadGroups();
+            } else {
+                alert('Fehler beim Erstellen der Gruppe');
+            }
+        });
+        
+        loadGroups();
+    </script>
+</body>
+</html>

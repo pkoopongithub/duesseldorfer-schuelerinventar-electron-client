@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DÜSK - Profil Details</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .profile-title h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .profile-title p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .norm-selector {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .norm-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .norm-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        
+        .tabs {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            border-bottom-color: #2196F3;
+            color: #2196F3;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .competence-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .competence-table th,
+        .competence-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .competence-table th:first-child,
+        .competence-table td:first-child {
+            text-align: left;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .btn-back {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .badge-high {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .badge-medium {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .badge-low {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="profile-title">
+                <h1 id="profileName">Profil</h1>
+                <p id="profileInfo">Gruppe: -</p>
+            </div>
+            <div class="norm-selector">
+                <button class="norm-btn active" data-norm="HS">HS (Hauptschule)</button>
+                <button class="norm-btn" data-norm="FS">FS (Förderschule)</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="0">Selbsteinschätzung</div>
+            <div class="tab" data-tab="1">Fremdeinschätzung</div>
+            <div class="tab" data-tab="2">Statistik</div>
+            <div class="tab" data-tab="3">Alle Items</div>
+        </div>
+        
+        <!-- SE Tab -->
+        <div id="tab0" class="tab-content active">
+            <div class="card">
+                <div class="card-title">Selbsteinschätzung - Kompetenzen</div>
+                <table class="competence-table" id="seTable">
+                    <thead>
+                        <tr><th>Kompetenz</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>Bewertung</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="card-title">Selbsteinschätzung - Profilverlauf</div>
+                <div class="chart-container">
+                    <canvas id="seChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FE Tab -->
+        <div id="tab1" class="tab-content">
+            <div class="card">
+                <div class="card-title">Fremdeinschätzung - Kompetenzen</div>
+                <table class="competence-table" id="feTable">
+                    <thead>
+                        <tr><th>Kompetenz</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>Bewertung</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="card-title">Fremdeinschätzung - Profilverlauf</div>
+                <div class="chart-container">
+                    <canvas id="feChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistik Tab -->
+        <div id="tab2" class="tab-content">
+            <div class="card">
+                <div class="card-title">Vergleich SE vs. FE</div>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="correlationValue">0.00</div>
+                    <div>Korrelation (r)</div>
+                    <small id="correlationDesc">keine Übereinstimmung</small>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="agreementValue">0%</div>
+                    <div>Übereinstimmung</div>
+                    <small id="agreementDesc">geringe Übereinstimmung</small>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Interpretation</div>
+                <div id="interpretationText" style="line-height: 1.6;"></div>
+            </div>
+        </div>
+        
+        <!-- Items Tab -->
+        <div id="tab3" class="tab-content">
+            <div class="card">
+                <div class="card-title">Alle Items (36)</div>
+                <table class="items-table" id="itemsTable">
+                    <thead><tr><th>#</th><th>Item</th><th>SE</th><th>FE</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <button class="btn-back" onclick="window.electronAPI.navigate('main')">← Zurück</button>
+    
+    <script src="../renderer.js"></script>
+    <script src="../js/session.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/calculator.js"></script>
+    <script src="../js/utils.js"></script>
+    <script>
+        let currentProfile = null;
+        let currentNorm = 'HS';
+        let seValues = [];
+        let feValues = [];
+        let seChart = null;
+        let feChart = null;
+        let comparisonChart = null;
+        
+        const kompetenzen = ['Arbeitsverhalten', 'Lernverhalten', 'Sozialverhalten', 'Fachkompetenz', 'Personale Kompetenz', 'Methodenkompetenz'];
+        
+        async function loadProfile() {
+            currentProfile = await window.electronAPI.storeGet('currentProfile');
+            if (!currentProfile) {
+                window.electronAPI.navigate('main');
+                return;
+            }
+            
+            document.getElementById('profileName').textContent = currentProfile.name;
+            document.getElementById('profileInfo').textContent = `Gruppe: ${currentProfile.gruppename || 'Keine Gruppe'} | ID: ${currentProfile.profilID}`;
+            
+            calculateValues();
+        }
+        
+        function calculateValues() {
+            const { se, fe } = calculateCompetenceValues(currentProfile, currentNorm);
+            seValues = se;
+            feValues = fe;
+            
+            renderTables();
+            renderCharts();
+            renderStatistics();
+            renderItemsTable();
+        }
+        
+        function renderTables() {
+            // SE Tabelle
+            const seTableBody = document.querySelector('#seTable tbody');
+            seTableBody.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const row = seTableBody.insertRow();
+                row.insertCell(0).textContent = kompetenzen[i];
+                for (let j = 1; j <= 5; j++) {
+                    row.insertCell(j).textContent = seValues[i] === j ? '✓' : '';
+                }
+                row.insertCell(6).textContent = getRatingText(seValues[i]);
+                if (seValues[i] >= 4) row.classList.add('high-rating');
+                else if (seValues[i] <= 2) row.classList.add('low-rating');
+            }
+            
+            // FE Tabelle
+            const feTableBody = document.querySelector('#feTable tbody');
+            feTableBody.innerHTML = '';
+            for (let i = 0; i < 6; i++) {
+                const row = feTableBody.insertRow();
+                row.insertCell(0).textContent = kompetenzen[i];
+                for (let j = 1; j <= 5; j++) {
+                    row.insertCell(j).textContent = feValues[i] === j ? '✓' : '';
+                }
+                row.insertCell(6).textContent = getRatingText(feValues[i]);
+            }
+        }
+        
+        function renderCharts() {
+            const ctxSE = document.getElementById('seChart').getContext('2d');
+            const ctxFE = document.getElementById('feChart').getContext('2d');
+            const ctxComp = document.getElementById('comparisonChart').getContext('2d');
+            
+            if (seChart) seChart.destroy();
+            if (feChart) feChart.destroy();
+            if (comparisonChart) comparisonChart.destroy();
+            
+            seChart = new Chart(ctxSE, {
+                type: 'line',
+                data: {
+                    labels: kompetenzen,
+                    datasets: [{
+                        label: 'Selbsteinschätzung',
+                        data: seValues,
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 1, max: 5, stepSize: 1 } }
+                }
+            });
+            
+            feChart = new Chart(ctxFE, {
+                type: 'line',
+                data: {
+                    labels: kompetenzen,
+                    datasets: [{
+                        label: 'Fremdeinschätzung',
+                        data: feValues,
+                        borderColor: '#FF5722',
+                        backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 1, max: 5, stepSize: 1 } }
+                }
+            });
+            
+            comparisonChart = new Chart(ctxComp, {
+                type: 'line',
+                data: {
+                    labels: kompetenzen,
+                    datasets: [
+                        {
+                            label: 'Selbsteinschätzung (SE)',
+                            data: seValues,
+                            borderColor: '#2196F3',
+                            backgroundColor: 'transparent',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Fremdeinschätzung (FE)',
+                            data: feValues,
+                            borderColor: '#FF5722',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 1, max: 5, stepSize: 1 } }
+                }
+            });
+        }
+        
+        function renderStatistics() {
+            const correlation = calculateCorrelation(seValues, feValues);
+            const agreement = calculateAgreement(currentProfile.seItems, currentProfile.feItems);
+            
+            document.getElementById('correlationValue').textContent = correlation.toFixed(2);
+            document.getElementById('agreementValue').textContent = `${agreement.toFixed(1)}%`;
+            
+            let corrDesc = '';
+            if (correlation >= 0.8) corrDesc = 'sehr gute Übereinstimmung';
+            else if (correlation >= 0.6) corrDesc = 'gute Übereinstimmung';
+            else if (correlation >= 0.4) corrDesc = 'mäßige Übereinstimmung';
+            else if (correlation >= 0.2) corrDesc = 'schwache Übereinstimmung';
+            else corrDesc = 'keine Übereinstimmung';
+            document.getElementById('correlationDesc').textContent = corrDesc;
+            
+            let agreeDesc = '';
+            if (agreement >= 80) agreeDesc = 'hohe inhaltliche Übereinstimmung';
+            else if (agreement >= 60) agreeDesc = 'mittlere inhaltliche Übereinstimmung';
+            else if (agreement >= 40) agreeDesc = 'geringe inhaltliche Übereinstimmung';
+            else agreeDesc = 'sehr geringe inhaltliche Übereinstimmung';
+            document.getElementById('agreementDesc').textContent = agreeDesc;
+            
+            const interpretation = getInterpretation(correlation, agreement, seValues, feValues);
+            document.getElementById('interpretationText').innerHTML = interpretation.replace(/\n/g, '<br>');
+        }
+        
+        function renderItemsTable() {
+            const items = [...ITEMS];
+            const tbody = document.querySelector('#itemsTable tbody');
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < 36; i++) {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = i + 1;
+                row.insertCell(1).textContent = items[i];
+                row.insertCell(2).textContent = currentProfile.seItems[i];
+                row.insertCell(3).textContent = currentProfile.feItems[i];
+            }
+        }
+        
+        // Tab handling
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab${tabId}`).classList.add('active');
+            });
+        });
+        
+        // Norm handling
+        document.querySelectorAll('.norm-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.norm-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentNorm = btn.dataset.norm;
+                calculateValues();
+            });
+        });
+        
+        loadProfile();
+    </script>
+</body>
+</html>

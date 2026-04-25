@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DÜSK - Profil bearbeiten</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .tabs {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #2196F3;
+            color: #2196F3;
+        }
+        
+        .items-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .item-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .item-name {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .rating-group {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .rating-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .rating-option.selected {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        
+        .rating-option:hover:not(.selected) {
+            background: #f0f0f0;
+        }
+        
+        .form-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            padding: 10px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .btn-secondary {
+            padding: 10px 24px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-card">
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="profileName" placeholder="Name">
+            </div>
+            <div class="form-group">
+                <label>Gruppe</label>
+                <select id="groupSelect"></select>
+            </div>
+            <div class="form-group" id="newGroupContainer" style="display:none;">
+                <label>Neue Gruppe</label>
+                <input type="text" id="newGroupName" placeholder="Name der neuen Gruppe">
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="0">Selbsteinschätzung (36 Items)</div>
+            <div class="tab" data-tab="1">Fremdeinschätzung (36 Items)</div>
+        </div>
+        
+        <div id="itemsContainer" class="items-container">
+            <div class="loading">Lade Items...</div>
+        </div>
+    </div>
+    
+    <div class="form-actions">
+        <button class="btn-secondary" onclick="window.electronAPI.navigate('main')">Abbrechen</button>
+        <button class="btn-primary" id="saveBtn">Speichern</button>
+    </div>
+    
+    <script src="../renderer.js"></script>
+    <script src="../js/session.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/calculator.js"></script>
+    <script src="../js/utils.js"></script>
+    <script>
+        let editProfile = null;
+        let groups = [];
+        let seItems = Array(36).fill(2);
+        let feItems = Array(36).fill(2);
+        let activeTab = 0;
+        
+        async function loadData() {
+            editProfile = await window.electronAPI.storeGet('editProfile');
+            
+            if (editProfile) {
+                document.getElementById('profileName').value = editProfile.name;
+                seItems = editProfile.seItems || seItems;
+                feItems = editProfile.feItems || feItems;
+            }
+            
+            await loadGroups();
+            renderItems();
+        }
+        
+        async function loadGroups() {
+            const result = await apiCall('api_groups.php', 'GET');
+            if (result.success) {
+                groups = result.data;
+                const select = document.getElementById('groupSelect');
+                select.innerHTML = '<option value="">Keine Gruppe</option>';
+                for (const group of groups) {
+                    select.innerHTML += `<option value="${group.gruppeID}">${escapeHtml(group.name)}</option>`;
+                }
+                select.innerHTML += '<option value="new">+ Neue Gruppe...</option>';
+                
+                if (editProfile && editProfile.gruppeID) {
+                    select.value = editProfile.gruppeID;
+                }
+                
+                select.addEventListener('change', () => {
+                    const newGroupContainer = document.getElementById('newGroupContainer');
+                    newGroupContainer.style.display = select.value === 'new' ? 'block' : 'none';
+                });
+            }
+        }
+        
+        function renderItems() {
+            const items = activeTab === 0 ? seItems : feItems;
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 36; i++) {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `
+                    <div class="item-name">${i + 1}. ${ITEMS[i]}</div>
+                    <div class="rating-group">
+                        ${[1, 2, 3, 4].map(rating => `
+                            <div class="rating-option ${items[i] === rating ? 'selected' : ''}" data-rating="${rating}">
+                                ${rating}<br><small>${rating === 1 ? 'trifft nicht zu' : rating === 2 ? 'trifft teilweise zu' : rating === 3 ? 'trifft zu' : 'trifft voll zu'}</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                card.querySelectorAll('.rating-option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const rating = parseInt(opt.dataset.rating);
+                        if (activeTab === 0) {
+                            seItems[i] = rating;
+                        } else {
+                            feItems[i] = rating;
+                        }
+                        renderItems();
+                    });
+                });
+                
+                container.appendChild(card);
+            }
+        }
+        
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                activeTab = parseInt(tab.dataset.tab);
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderItems();
+            });
+        });
+        
+        document.getElementById('saveBtn').addEventListener('click', async () => {
+            const name = document.getElementById('profileName').value.trim();
+            if (!name) {
+                alert('Bitte geben Sie einen Namen ein');
+                return;
+            }
+            
+            let groupId = document.getElementById('groupSelect').value;
+            let groupName = null;
+            
+            if (groupId === 'new') {
+                const newGroupName = document.getElementById('newGroupName').value.trim();
+                if (newGroupName) {
+                    const createResult = await apiCall('api_groups.php', 'POST', { name: newGroupName });
+                    if (createResult.success) {
+                        const groupsResult = await apiCall('api_groups.php', 'GET');
+                        const newGroup = groupsResult.data.find(g => g.name === newGroupName);
+                        if (newGroup) groupId = newGroup.gruppeID;
+                        groupName = newGroupName;
+                    }
+                } else {
+                    groupId = null;
+                }
+            }
+            
+            const profileData = {
+                name: name,
+                gruppeID: groupId || null,
+                gruppename: groupName,
+                ...buildItemsObject(seItems, feItems)
+            };
+            
+            let result;
+            if (editProfile) {
+                result = await apiCall('api_profiles.php', 'PUT', profileData, { 'X-Profile-ID': editProfile.profilID });
+            } else {
+                result = await apiCall('api_profiles.php', 'POST', profileData);
+            }
+            
+            if (result.success && result.status === 200) {
+                await window.electronAPI.storeDelete('editProfile');
+                window.electronAPI.navigate('main');
+            } else {
+                alert('Fehler beim Speichern');
+            }
+        });
+        
+        loadData();
+    </script>
+</body>
+</html>

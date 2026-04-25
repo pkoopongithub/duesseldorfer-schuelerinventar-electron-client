@@ -1,0 +1,27 @@
+{
+  "appId": "com.duesk.app",
+  "productName": "DÜSK",
+  "directories": {
+    "output": "dist"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "assets/icons/icon.ico"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "assets/icons/icon.icns",
+    "category": "public.app-category.education"
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "icon": "assets/icons/icon.png",
+    "category": "Education"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  }
+}
