@@ -256,40 +256,6 @@ CREATE TABLE profiles (
 - **Für macOS:** Xcode Command Line Tools
 - **Für Linux:** build-essential (`sudo apt install build-essential`)
 
-### Schritt-für-Schritt Installation
-
-```bash
-# 1. Repository klonen
-git clone https://github.com/yourusername/duesk-electron.git
-cd duesk-electron
-
-# 2. Abhängigkeiten installieren
-npm install
-
-# 3. App starten (Entwicklungsmodus)
-npm start
-
-# 4. Debug-Modus mit Entwicklertools
-npm run dev
-```
-
-### Plattformspezifische Builds
-
-```bash
-# Windows Installer (NSIS)
-npm run build:win
-
-# macOS App (DMG)
-npm run build:mac
-
-# Linux (AppImage + DEB)
-npm run build:linux
-
-# Alle Plattformen
-npm run dist
-```
-
----
 
 ## 📁 Projektstruktur
 
